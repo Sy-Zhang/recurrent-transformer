@@ -19,7 +19,6 @@ from pycocoevalcap.rouge.rouge import Rouge
 from pycocoevalcap.cider.cider import Cider
 #from pycocoevalcap.re.re import Re
 #from pycocoevalcap.self_bleu.self_bleu import Self_Bleu
-from sets import Set
 import numpy as np
 
 import re
@@ -64,13 +63,13 @@ class ANETcaptions(object):
     def ensure_caption_key(self, data):
         if len(data) == 0:
             return data
-        if not data.keys()[0].startswith('v_'):
+        if not list(data.keys())[0].startswith('v_'):
             data = {'v_' + k: data[k] for k in data}
         return data
 
     def import_prediction(self, prediction_filename):
         if self.verbose:
-            print "| Loading submission... {}".format(prediction_filename)
+            print ("| Loading submission... {}".format(prediction_filename))
         submission = json.load(open(prediction_filename))['results']
         # change to paragraph format
         para_submission = {}
@@ -85,13 +84,13 @@ class ANETcaptions(object):
 
     def import_ground_truths(self, filenames):
         gts = []
-        self.n_ref_vids = Set()
+        self.n_ref_vids = set()
         for filename in filenames:
             gt = json.load(open(filename))
             self.n_ref_vids.update(gt.keys())
             gts.append(self.ensure_caption_key(gt))
         if self.verbose:
-            print "| Loading GT. #files: %d, #videos: %d" % (len(filenames), len(self.n_ref_vids))
+            print ("| Loading GT. #files: %d, #videos: %d" % (len(filenames), len(self.n_ref_vids)))
         return gts
 
     def check_gt_exists(self, vid_id):
@@ -110,7 +109,7 @@ class ANETcaptions(object):
         self.scores = self.evaluate_para()
 
     def evaluate_para(self):
-        # This method averages the tIoU precision from METEOR, Bleu, etc. across videos 
+        # This method averages the tIoU precision from METEOR, Bleu, etc. across videos
         gt_vid_ids = self.get_gt_vid_ids()
         vid2idx = {k: i for i, k in enumerate(gt_vid_ids)}
         gts = {vid2idx[k]: [] for k in gt_vid_ids}
@@ -131,7 +130,7 @@ class ANETcaptions(object):
         easy_samples = {}
         for scorer, method in self.scorers:
             if self.verbose:
-                print 'computing %s score...'%(scorer.method())
+                print('computing %s score...'%(scorer.method()))
 
             if method != 'Self_Bleu':
                 score, scores = scorer.compute_score(gts, res)
@@ -140,10 +139,10 @@ class ANETcaptions(object):
             scores = np.asarray(scores)
 
             if type(method) == list:
-                for m in xrange(len(method)):
+                for m in range(len(method)):
                     output[method[m]] = score[m]
                     if self.verbose:
-                        print "%s: %0.3f" % (method[m], output[method[m]])
+                        print("%s: %0.3f" % (method[m], output[method[m]]))
                 for m, i in enumerate(scores.argmin(1)):
                     if i not in hard_samples:
                         hard_samples[i] = []
@@ -155,7 +154,7 @@ class ANETcaptions(object):
             else:
                 output[method] = score
                 if self.verbose:
-                    print "%s: %0.3f" % (method, output[method])
+                    print("%s: %0.3f" % (method, output[method]))
                 i = scores.argmin()
                 if i not in hard_samples:
                     hard_samples[i] = []
@@ -164,7 +163,7 @@ class ANETcaptions(object):
                 if i not in easy_samples:
                     easy_samples[i] = []
                 easy_samples[i].append(method)
-        print '# scored video =', num
+        print('# scored video =', num)
 
         self.hard_samples = {gt_vid_ids[i]: v for i, v in hard_samples.items()}
         self.easy_samples = {gt_vid_ids[i]: v for i, v in easy_samples.items()}
@@ -180,10 +179,12 @@ def main(args):
     output = {}
     # Output the results
     for metric, score in evaluator.scores.items():
-        print '| %s: %2.4f'%(metric, 100*score)
+        if args.verbose:
+            print('| %s: %2.4f'%(metric, 100*score))
         output[metric] = score
     json.dump(output, open(args.output, 'w'))
-    print(output)
+    if args.verbose:
+        print(output)
 
 import time
 if __name__=='__main__':
@@ -211,4 +212,4 @@ if __name__=='__main__':
         start_time = time.time()
     main(args)
     if args.time:
-        print 'time = %.2f' % (time.time() - start_time)
+        print('time = %.2f' % (time.time() - start_time))

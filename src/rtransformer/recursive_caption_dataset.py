@@ -149,7 +149,7 @@ class RecursiveCaptionDataset(Dataset):
             self.data = data
         else:  # non-recurrent single sentence
             singel_sentence_data = []
-            for d in data:
+            for d in sorted(data, key=lambda x: x['name']):
                 num_sen = min(self.max_n_sen, len(d["sentences"]))
                 singel_sentence_data.extend([
                     {

@@ -5,6 +5,8 @@ This script handles the training process.
 import argparse
 import math
 import time
+import os, sys
+sys.path.append(os.path.join('..'))
 
 import random
 import numpy as np
@@ -49,7 +51,7 @@ def train_epoch(model, training_data, optimizer, ema, device, opt, writer, epoch
 
     torch.autograd.set_detect_anomaly(True)
     for batch_idx, batch in tqdm(enumerate(training_data), mininterval=2,
-                                 desc="  Training =>", total=len(training_data)):
+                                 desc="  Training =>", total=len(training_data), dynamic_ncols=True):
         niter = epoch * len(training_data) + batch_idx
         writer.add_scalar("Train/LearningRate", float(optimizer.param_groups[0]["lr"]), niter)
         if opt.recurrent:
@@ -167,7 +169,7 @@ def eval_epoch(model, validation_data, device, opt):
     n_word_correct = 0
 
     with torch.no_grad():
-        for batch in tqdm(validation_data, mininterval=2, desc="  Validation =>"):
+        for batch in tqdm(validation_data, mininterval=2, desc="  Validation =>", dynamic_ncols=True):
             if opt.recurrent:
                 # prepare data
                 batched_data = [prepare_batch_inputs(step_data, device=device, non_blocking=opt.pin_memory)
@@ -239,9 +241,9 @@ def eval_language_metrics(checkpoint, eval_data_loader, opt, model=None, eval_mo
 
     if opt.dset_name == "anet":
         reference_files_map = {
-            "val": [os.path.join(opt.data_dir, e) for e in
+            "val": [os.path.join('anet_data', e) for e in
                     ["anet_entities_val_1_para.json", "anet_entities_val_2_para.json"]],
-            "test": [os.path.join(opt.data_dir, e) for e in
+            "test": [os.path.join('anet_data', e) for e in
                      ["anet_entities_test_1_para.json", "anet_entities_test_2_para.json"]]}
     else:  # yc2
         reference_files_map = {"val": [os.path.join(opt.data_dir, "yc2_val_anet_format_para.json")]}
@@ -480,7 +482,7 @@ def get_args():
     parser.add_argument("--no_pin_memory", action="store_true",
                         help="Don't use pin_memory=True for dataloader. "
                              "ref: https://discuss.pytorch.org/t/should-we-set-non-blocking-to-true/38234/4")
-    parser.add_argument("---num_workers", type=int, default=8,
+    parser.add_argument("--num_workers", type=int, default=8,
                         help="num subprocesses used to load the data, 0: use main process")
     parser.add_argument("--exp_id", type=str, default="res", help="id of the current run")
     parser.add_argument("--res_root_dir", type=str, default="results", help="dir to containing all the results")
@@ -620,7 +622,7 @@ def main():
         if hasattr(model, "embeddings"):
             logger.info("Load GloVe as word embedding")
             model.embeddings.set_pretrained_embedding(
-                torch.from_numpy(torch.load(opt.glove_path)).float(), freeze=opt.freeze_glove)
+                torch.from_numpy(torch.load(opt.glove_path, encoding='bytes')).float(), freeze=opt.freeze_glove)
         else:
             logger.warning("This model has no embeddings, cannot load glove vectors into the model")
 

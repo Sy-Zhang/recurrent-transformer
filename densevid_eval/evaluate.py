@@ -17,7 +17,6 @@ from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.rouge.rouge import Rouge
 from pycocoevalcap.cider.cider import Cider
 from pycocoevalcap.spice.spice import Spice
-from sets import Set
 import numpy as np
 
 def remove_nonascii(text):
@@ -60,7 +59,7 @@ class ANETcaptions(object):
 
     def import_prediction(self, prediction_filename):
         if self.verbose:
-            print "| Loading submission..."
+            print ("| Loading submission...")
         submission = json.load(open(prediction_filename))
         if not all([field in submission.keys() for field in self.pred_fields]):
             raise IOError('Please input a valid ground truth file.')
@@ -76,13 +75,13 @@ class ANETcaptions(object):
 
     def import_ground_truths(self, filenames):
         gts = []
-        self.n_ref_vids = Set()
+        self.n_ref_vids = set()
         for filename in filenames:
             gt = json.load(open(filename))
             self.n_ref_vids.update(gt.keys())
             gts.append(gt)
         if self.verbose:
-            print "| Loading GT. #files: %d, #videos: %d" % (len(filenames), len(self.n_ref_vids))
+            print ("| Loading GT. #files: %d, #videos: %d" % (len(filenames), len(self.n_ref_vids)))
         return gts
 
     def iou(self, interval_1, interval_2):
@@ -222,7 +221,7 @@ class ANETcaptions(object):
 
         for scorer, method in self.scorers:
             if self.verbose:
-                print 'computing %s score...'%(scorer.method())
+                print ('computing %s score...'%(scorer.method()))
 
             # For each video, take all the valid pairs (based from tIoU) and compute the score
             all_scores = {}
@@ -245,14 +244,14 @@ class ANETcaptions(object):
             #print all_scores.values()
             if type(method) == list:
                 scores = np.mean(all_scores.values(), axis=0)
-                for m in xrange(len(method)):
+                for m in range(len(method)):
                     output[method[m]] = scores[m]
                     if self.verbose:
-                        print "Calculated tIoU: %1.1f, %s: %0.3f" % (tiou, method[m], output[method[m]])
+                        print ("Calculated tIoU: %1.1f, %s: %0.3f" % (tiou, method[m], output[method[m]]))
             else:
                 output[method] = np.mean(all_scores.values())
                 if self.verbose:
-                    print "Calculated tIoU: %1.1f, %s: %0.3f" % (tiou, method, output[method])
+                    print ("Calculated tIoU: %1.1f, %s: %0.3f" % (tiou, method, output[method]))
         return output
 
 def main(args):
@@ -267,21 +266,21 @@ def main(args):
     # Output the results
     if args.verbose:
         for i, tiou in enumerate(args.tious):
-            print '-' * 80
-            print "tIoU: " , tiou
-            print '-' * 80
+            print ('-' * 80)
+            print ("tIoU: " , tiou)
+            print ('-' * 80)
             for metric in evaluator.scores:
                 score = evaluator.scores[metric][i]
-                print '| %s: %2.4f'%(metric, 100*score)
+                print ('| %s: %2.4f'%(metric, 100*score))
 
     # Print the averages
-    print '-' * 80
-    print "Average across all tIoUs"
-    print '-' * 80
+    print ('-' * 80)
+    print ("Average across all tIoUs")
+    print ('-' * 80)
     output = {}
     for metric in evaluator.scores:
         score = evaluator.scores[metric]
-        print '| %s: %2.4f'%(metric, 100 * sum(score) / float(len(score)))
+        print ('| %s: %2.4f'%(metric, 100 * sum(score) / float(len(score))))
     output[metric] = 100 * sum(score) / float(len(score))
     json.dump(output,open(args.output,'w'))
     print(output)

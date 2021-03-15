@@ -53,7 +53,7 @@ def run_translate(eval_data_loader, translator, opt):
                 for step_idx, step_batch in enumerate(dec_seq_list[:step_size]):
                     batch_res["results"][cur_meta["name"]].append({
                         "sentence": eval_data_loader.dataset.convert_ids_to_sentence(
-                            step_batch[example_idx].cpu().tolist()).encode("ascii", "ignore"),
+                            step_batch[example_idx].cpu().tolist()),
                         "timestamp": cur_meta["timestamp"][step_idx],
                         "gt_sentence": cur_meta["gt_sentence"][step_idx]
                     })
@@ -83,7 +83,7 @@ def run_translate(eval_data_loader, translator, opt):
             for example_idx, (cur_gen_sen, cur_meta) in enumerate(zip(dec_seq, meta)):
                 cur_data = {
                     "sentence": eval_data_loader.dataset.convert_ids_to_sentence(
-                        cur_gen_sen.cpu().tolist()).encode("ascii", "ignore"),
+                        cur_gen_sen.cpu().tolist()),
                     "timestamp": cur_meta["timestamp"],
                     "gt_sentence": cur_meta["gt_sentence"]
                 }
@@ -110,7 +110,7 @@ def get_data_loader(opt, eval_mode="val"):
     else:  # single sentence
         collate_fn = single_sentence_collate
     eval_data_loader = DataLoader(eval_dataset, collate_fn=collate_fn,
-                                  batch_size=opt.batch_size, shuffle=False, num_workers=8)
+                                  batch_size=opt.batch_size, shuffle=False, num_workers=0)
     return eval_data_loader
 
 
